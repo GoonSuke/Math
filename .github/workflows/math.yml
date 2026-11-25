@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MathMind – offline math solver</title>
+<title>GoonSuke – offline math solver</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
 <style>
 :root{--bg:#e3f6ef;--card:#f3fcf9;--ink:#0e2b2b;--mute:#467370;--acc:#08857f;--accink:#fff;--line:#b4e2d6;--chip:#cdeee5;--err:#a3352b;
@@ -26,19 +26,23 @@ button{font:inherit;cursor:pointer;border:0;border-radius:10px}
 .card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:14px 16px;margin-bottom:12px}
 .q{color:var(--mute);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;overflow-wrap:anywhere}
 .a{font:600 1.5rem/1.35 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;overflow-wrap:anywhere}
+.a.def{font:600 1.05rem/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif;white-space:pre-line}
 .err{color:var(--err);font-size:1rem}
 ul{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:.9rem}
 .hint{color:var(--mute);font-size:.88rem;margin-top:28px}
+.flash{animation:fl .9s}
+@keyframes fl{0%,60%{box-shadow:0 0 0 4px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:3px solid var(--acc)}}
 </style>
 </head>
 <body>
 <main>
-<h1>MathMind</h1>
+<h1>GoonSuke</h1>
 <p class="sub">A math solver that runs entirely in your browser. No API key, no server.</p>
-<div class="bar"><input id="q" placeholder="Try: solve x^2 - 5x + 6 = 0" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
+<div class="bar"><input id="q" placeholder="Try: what is sine, cosine and tangent?" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
 <div class="chips" id="chips"></div>
 <div id="out"></div>
-<p class="hint">It handles arithmetic, exact fractions, equations with one unknown, derivatives, definite integrals, simplify and expand, prime factors, percentages, matrices (det, inv), and functions like gcd, lcm, factorial and combinations. It can’t read free-form word problems.</p>
+<p class="hint">It handles arithmetic, exact fractions, equations with one unknown, derivatives, definite integrals, simplify and expand, prime factors, percentages and matrices. It also explains concepts such as sine, cosine, tangent, the Pythagorean theorem, logarithms, derivatives and more. It can’t read free-form word problems.</p>
 </main>
 <script>
 const $ = s => document.querySelector(s);
@@ -53,6 +57,56 @@ const C = z => {
 };
 const uv = e => { const s = math.parse(e).filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name); return s[0] || "x"; };
 
+/* ---------- Concept knowledge base: [aliases, title, definition, detail lines] ---------- */
+const DB = [
+[["sin","sine","sine function"],"Sine","In a right triangle, the sine of an angle is the length of the opposite side divided by the hypotenuse.",["sin θ = opposite / hypotenuse (the SOH in SOH-CAH-TOA)","On the unit circle, sin θ is the y-coordinate of the point at angle θ","Ranges from −1 to 1 and repeats every 360° (2π radians)","Key values: sin 0° = 0, sin 30° = 1/2, sin 45° = √2/2, sin 60° = √3/2, sin 90° = 1","Try it: sin(30 deg)"]],
+[["cos","cosine","cosine function"],"Cosine","In a right triangle, the cosine of an angle is the length of the adjacent side divided by the hypotenuse.",["cos θ = adjacent / hypotenuse (the CAH in SOH-CAH-TOA)","On the unit circle, cos θ is the x-coordinate of the point at angle θ","Ranges from −1 to 1 and repeats every 360° (2π radians)","Key values: cos 0° = 1, cos 30° = √3/2, cos 45° = √2/2, cos 60° = 1/2, cos 90° = 0","Try it: cos(60 deg)"]],
+[["tan","tangent","tangent function"],"Tangent","In a right triangle, the tangent of an angle is the length of the opposite side divided by the adjacent side.",["tan θ = opposite / adjacent (the TOA in SOH-CAH-TOA)","tan θ = sin θ / cos θ, and it’s the slope of the line at angle θ","Undefined at 90° (where cos θ = 0) and repeats every 180°","Key values: tan 0° = 0, tan 30° = √3/3 ≈ 0.577, tan 45° = 1, tan 60° = √3 ≈ 1.732","Try it: tan(45 deg)"]],
+[["sec","secant","csc","cosecant","cot","cotangent","reciprocal trig functions"],"Secant, cosecant and cotangent","These are the reciprocals of cosine, sine and tangent.",["sec θ = 1 / cos θ","csc θ = 1 / sin θ","cot θ = 1 / tan θ = cos θ / sin θ","Try it: sec(60 deg)"]],
+[["trig","trigonometry","soh cah toa","sohcahtoa","soh-cah-toa"],"Trigonometry","Trigonometry studies how the angles and side lengths of triangles relate, using sine, cosine and tangent.",["SOH: sin θ = opposite / hypotenuse","CAH: cos θ = adjacent / hypotenuse","TOA: tan θ = opposite / adjacent","Identity worth knowing: sin²θ + cos²θ = 1","Angles are read as radians unless you write deg, for example sin(30 deg)"]],
+[["pythagorean theorem","pythagoras theorem","pythagorean","pythagoras"],"Pythagorean theorem","In a right triangle, the square of the hypotenuse equals the sum of the squares of the other two sides.",["a² + b² = c², where c is the hypotenuse","Example: sides 3 and 4 give c = √(9 + 16) = 5","Try it: sqrt(3^2 + 4^2)"]],
+[["unit circle"],"Unit circle","A circle of radius 1 centered at the origin; the point at angle θ has coordinates (cos θ, sin θ).",["It extends sine and cosine to every angle, not just those in right triangles","Its equation is x² + y² = 1"]],
+[["radian","radians","degree","degrees"],"Radians and degrees","A radian is the angle whose arc is as long as the radius; a full turn is 2π radians, or 360°.",["180° = π radians, so 1 radian ≈ 57.2958°","Degrees to radians: multiply by π/180","Try it: 90 deg to rad"]],
+[["pi","π"],"Pi (π)","Pi is the ratio of a circle’s circumference to its diameter, about 3.14159265.",["It’s irrational: its decimal expansion never ends or repeats","Circumference = 2πr, area = πr²"]],
+[["e","euler's number","eulers number","euler number"],"Euler’s number (e)","e is about 2.71828: the base of natural logarithms and of the function that equals its own derivative.",["eˣ is its own derivative and its own integral","e = lim (1 + 1/n)ⁿ as n → ∞","Try it: e^2"]],
+[["log","logarithm","logarithms","ln","natural log","natural logarithm"],"Logarithm","A logarithm answers “what power must I raise the base to in order to get this number?”",["log₂(8) = 3 because 2³ = 8","In math.js, log(x) is the natural log (ln) and log10(x) is base 10","Rules: log(ab) = log a + log b, and log(aᵇ) = b · log a","Try it: log(8, 2)"]],
+[["exponent","exponents","power","powers"],"Exponent","An exponent says how many times to multiply a number by itself.",["2⁵ = 2 × 2 × 2 × 2 × 2 = 32","x⁰ = 1 and x⁻ⁿ = 1/xⁿ","Try it: 2^5"]],
+[["square root","sqrt","root","roots"],"Square root","The square root of a number is the value that, multiplied by itself, gives that number.",["√25 = 5 because 5 × 5 = 25","Negative numbers have imaginary roots: √(−1) = i","Try it: sqrt(144)"]],
+[["derivative","derivatives","differentiation"],"Derivative","The derivative measures how fast a function is changing at each point: the slope of its tangent line.",["Power rule: d/dx xⁿ = n · xⁿ⁻¹","Product rule: (fg)′ = f′g + fg′","Chain rule: (f(g(x)))′ = f′(g(x)) · g′(x)","Try it: derivative of x^3 + 2x"]],
+[["integral","integrals","integration","antiderivative"],"Integral","An integral adds up infinitely many tiny pieces; a definite integral gives the area under a curve between two points.",["Fundamental theorem: ∫ₐᵇ f(x) dx = F(b) − F(a), where F′ = f","Power rule: ∫ xⁿ dx = xⁿ⁺¹/(n + 1) + C","This page computes definite integrals numerically","Try it: integrate x^2 from 0 to 3"]],
+[["limit","limits"],"Limit","A limit is the value a function gets closer and closer to as its input approaches some point.",["lim x→0 of sin(x)/x = 1","Derivatives are defined as limits of slopes of secant lines"]],
+[["slope","gradient"],"Slope","Slope is how steeply a line rises or falls: the change in y divided by the change in x.",["m = (y₂ − y₁) / (x₂ − x₁)","Line equation: y = mx + b, where b is the y-intercept","Try it: (7 - 3) / (5 - 1)"]],
+[["quadratic formula","quadratic equation","quadratic","quadratics"],"Quadratic formula","For ax² + bx + c = 0, the solutions are x = (−b ± √(b² − 4ac)) / 2a.",["The discriminant b² − 4ac decides the roots: positive gives two real roots, zero gives one, negative gives two complex roots","Try it: solve x^2 - 5x + 6 = 0"]],
+[["prime","prime number","primes","prime numbers"],"Prime number","A prime is a whole number greater than 1 whose only positive divisors are 1 and itself.",["The first primes are 2, 3, 5, 7, 11, 13","2 is the only even prime","Try it: factor 91"]],
+[["gcd","greatest common divisor","greatest common factor","gcf","hcf"],"Greatest common divisor","The GCD of two numbers is the largest whole number that divides both of them evenly.",["gcd(12, 18) = 6","Try it: gcd(12, 18)"]],
+[["lcm","least common multiple","lowest common multiple"],"Least common multiple","The LCM of two numbers is the smallest positive number that both divide evenly.",["lcm(4, 6) = 12","lcm(a, b) = a · b / gcd(a, b)","Try it: lcm(4, 6)"]],
+[["factorial","factorials"],"Factorial","n! is the product of all whole numbers from 1 up to n.",["5! = 5 × 4 × 3 × 2 × 1 = 120","By convention 0! = 1","Try it: 5!"]],
+[["mean","average","median","mode"],"Mean, median and mode","These are three ways to describe the center of a data set.",["Mean: add the values, then divide by how many there are","Median: the middle value once the data is sorted","Mode: the value that appears most often","Try it: mean([2, 4, 4, 10]) or median([2, 4, 4, 10])"]],
+[["standard deviation","variance"],"Standard deviation","Standard deviation measures how spread out values are around their mean.",["Population version: σ = √( Σ(xᵢ − mean)² / n )","Variance is the square of the standard deviation","math.js divides by n − 1 by default; add 'uncorrected' for the population version","Try it: std([2, 4, 4, 4, 5, 5, 7, 9], 'uncorrected')"]],
+[["matrix","matrices"],"Matrix","A matrix is a rectangular grid of numbers, used to represent linear transformations and systems of equations.",["Multiply matrices with *: [[1,2],[3,4]] * [[0,1],[1,0]]","Try it: inv([[1,2],[3,4]])"]],
+[["determinant","det"],"Determinant","The determinant is a single number from a square matrix that tells you whether it’s invertible and how it scales area.",["For [[a,b],[c,d]] it equals ad − bc","A determinant of 0 means the matrix has no inverse","Try it: det([[1,2],[3,4]])"]],
+[["imaginary number","imaginary numbers","complex number","complex numbers","i"],"Imaginary and complex numbers","The imaginary unit i is defined by i² = −1, and a complex number has the form a + bi.",["They give square roots to negative numbers: √(−9) = 3i","Try it: (2 + 3i) * (1 - i)"]],
+[["probability"],"Probability","Probability is the chance that an event happens, from 0 (impossible) to 1 (certain).",["P(event) = favorable outcomes / total equally likely outcomes","Rolling a 4 on a fair die: 1/6","Try it: 1/6"]],
+[["permutation","permutations","combination","combinations"],"Permutations and combinations","A permutation counts ordered arrangements; a combination counts selections where order doesn’t matter.",["Permutations: n! / (n − r)!","Combinations: n! / (r! (n − r)!)","Try it: combinations(5, 2) or permutations(5, 2)"]],
+[["percent","percentage","percentages"],"Percent","A percent is a fraction out of 100.",["x% of y = (x / 100) · y","Try it: 15% of 80"]]
+];
+const K = {}; DB.forEach(c => c[0].forEach(a => K[a] = c));
+const QW = /^(what'?s|whats|what is|what are|define|definition of|explain|meaning of|tell me about|describe)\s+/;
+function concept(raw) {
+  let t = raw.trim().toLowerCase().replace(/’/g, "'").replace(/[?!.]+$/, "");
+  const asked = QW.test(t) || /\?\s*$/.test(raw);
+  t = t.replace(QW, "").replace(/^(a|an|the)\s+/, "").trim();
+  const parts = t.split(/\s*(?:,|&|\band\b|\bor\b)\s*/).filter(Boolean).map(p => p.replace(/^(a|an|the)\s+/, ""));
+  if (!parts.length) return null;
+  const hit = parts.map(p => K[p] || K[p.replace(/s$/, "")]);
+  if (hit.some(x => !x)) return null;
+  if (!asked && parts.length === 1) { try { if (typeof math.evaluate(t) === "number") return null; } catch (_) {} }
+  const u = [...new Set(hit)];
+  if (u.length === 1) return {ans: u[0][2], steps: u[0][3], concept: true};
+  return {ans: u.map(c => c[1] + ": " + c[2]).join("\n"), steps: u.flatMap(c => c[3].slice(0, 2).map(s => c[1] + " – " + s)), concept: true};
+}
+
+/* ---------- Solvers ---------- */
 function polyRoots(co) {
   const n = co.length - 1, a = co.map(v => v / co[n]);
   const z = []; for (let k = 0; k < n; k++) z.push(math.pow(math.complex(0.4, 0.9), k));
@@ -81,91 +135,4 @@ function solve(s) {
   let co = null;
   try { co = math.rationalize(e, {}, true).coefficients.map(Number); if (co.some(isNaN)) co = null; } catch (_) {}
   if (co) {
-    while (co.length > 1 && Math.abs(co[co.length - 1]) < 1e-12) co.pop();
-    const n = co.length - 1;
-    steps.push("Polynomial of degree " + n + ", coefficients from lowest power: [" + co.map(cl).join(", ") + "]");
-    if (n === 0) return {ans: Math.abs(co[0]) < 1e-12 ? "Every value of " + v + " works" : "No solution", steps};
-    if (n === 2) steps.push("Discriminant b² − 4ac = " + cl(co[1] * co[1] - 4 * co[2] * co[0]));
-    if (n > 2) steps.push("Roots found with the Durand–Kerner iteration");
-    const rs = n === 1 ? [{re: -co[0] / co[1], im: 0}] : polyRoots(co);
-    const txt = [...new Set(rs.map(C))];
-    rs.filter(z => Math.abs(z.im) < 1e-9).slice(0, 1).forEach(z => {
-      steps.push("Check: plugging " + v + " = " + C(z) + " back in leaves a residual of " + F(node.evaluate({[v]: z.re})));
-    });
-    return {ans: txt.map(t => v + " = " + t).join("   "), steps};
-  }
-  steps.push("Not a polynomial, so I scan [-100, 100] for sign changes and refine each by bisection");
-  const f = x => { try { const y = node.evaluate({[v]: x}); return typeof y === "number" && isFinite(y) ? y : NaN; } catch (_) { return NaN; } };
-  const out = new Set(); let px = -100, py = f(px);
-  for (let x = -99.99; x <= 100; x += 0.01) {
-    const y = f(x);
-    if (py * y < 0) { let a = px, b = x; for (let i = 0; i < 60; i++) { const m = (a + b) / 2; if (f(a) * f(m) <= 0) b = m; else a = m; } out.add(cl((a + b) / 2)); }
-    else if (y === 0) out.add(cl(x));
-    px = x; py = y;
-  }
-  return {ans: out.size ? [...out].map(t => v + " ≈ " + t).join("   ") : "No real solutions found in [-100, 100]", steps};
-}
-
-function run(raw) {
-  const q = raw.trim().replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-").replace(/\?+$/, "")
-    .replace(/^(what(?:'|’)?s|what is|calculate|compute|evaluate|find)\s+/i, "");
-  let m;
-  if (m = q.match(/^(?:derivative|differentiate|diff|d\/dx)(?:\s+of)?\s+(.+)$/i)) {
-    const v = uv(m[1]);
-    return {ans: "d/d" + v + " = " + math.simplify(math.derivative(m[1], v)).toString(), steps: ["Applied the power, product, quotient and chain rules, then simplified"]};
-  }
-  if (m = q.match(/^(?:integrate|integral of)\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+)$/i)) {
-    const A = math.evaluate(m[2]), B = math.evaluate(m[3]), c = math.compile(m[1]), v = uv(m[1]), n = 2000, h = (B - A) / n;
-    let s = 0;
-    for (let i = 0; i <= n; i++) s += (i === 0 || i === n ? 1 : i % 2 ? 4 : 2) * c.evaluate({[v]: A + i * h});
-    return {ans: "≈ " + F(s * h / 3), steps: ["Simpson’s rule with 2000 intervals on [" + F(A) + ", " + F(B) + "]"]};
-  }
-  if (m = q.match(/^(?:factor|factorise|factorize|prime factors? of)\s+(\d+)$/i)) {
-    const N = +m[1]; if (N < 2 || N > 1e14) throw Error("Use a whole number from 2 to 100,000,000,000,000");
-    const f = {}; let r = N;
-    for (let p = 2; p * p <= r; p++) while (r % p === 0) { f[p] = (f[p] || 0) + 1; r /= p; }
-    if (r > 1) f[r] = (f[r] || 0) + 1;
-    const ent = Object.entries(f), divs = ent.reduce((t, [, e]) => t * (e + 1), 1);
-    return {ans: ent.length === 1 && ent[0][1] === 1 ? N + " is prime" : N + " = " + ent.map(([p, e]) => e > 1 ? p + "^" + e : p).join(" × "), steps: ["Trial division up to √" + N, "It has " + divs + " positive divisors"]};
-  }
-  if (m = q.match(/^simplify\s+(.+)$/i)) return {ans: math.simplify(m[1]).toString(), steps: ["Applied algebraic rewrite rules until nothing more reduced"]};
-  if (m = q.match(/^expand\s+(.+)$/i)) return {ans: math.rationalize(m[1]).toString(), steps: ["Multiplied out and collected like terms"]};
-  if (m = q.match(/^(-?[\d.]+)\s*%\s*of\s+(.+)$/i)) {
-    return {ans: F(math.evaluate("(" + m[1] + "/100)*(" + m[2] + ")")), steps: [m[1] + "% means " + m[1] + "/100, so I multiplied that by " + m[2]]};
-  }
-  if (/^solve\b/i.test(q) || q.includes("=")) return solve(q.replace(/^solve\s*(for\s+\w+\s*:?)?/i, ""));
-  let val;
-  try { val = math.evaluate(q); }
-  catch (err) {
-    if (/Undefined symbol/.test(err.message)) return {ans: math.simplify(q).toString(), steps: ["It has unknown symbols, so I simplified it symbolically"]};
-    throw err;
-  }
-  const steps = ["Interpreted as: " + math.parse(q).toString()];
-  let ans = F(val);
-  try {
-    const x = fm.evaluate(q);
-    if (math.isFraction(x) && x.d !== 1) { ans = x.s * x.n + "/" + x.d + "  ≈  " + ans; steps.push("Exact fraction arithmetic keeps the result precise"); }
-  } catch (_) {}
-  return {ans, steps};
-}
-
-function ask(text) {
-  const q = (text || $("#q").value).trim(); if (!q) return;
-  const card = document.createElement("article"); card.className = "card";
-  const h = document.createElement("div"); h.className = "q"; h.textContent = q; card.append(h);
-  const a = document.createElement("div"); a.className = "a";
-  try {
-    const r = run(q); a.textContent = r.ans; card.append(a);
-    if (r.steps && r.steps.length) { const u = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; u.append(li); }); card.append(u); }
-  } catch (e) { a.className = "a err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; card.append(a); }
-  $("#out").prepend(card); $("#q").value = "";
-}
-
-["solve x^2 - 5x + 6 = 0", "derivative of sin(x)*x^2", "integrate x^2 from 0 to 3", "factor 360", "15% of 80", "1/3 + 2/5", "det([[1,2],[3,4]])", "solve cos(x) = x", "simplify (x^2-1)/(x-1)"].forEach(t => {
-  const b = document.createElement("button"); b.className = "chip"; b.textContent = t; b.onclick = () => ask(t); $("#chips").append(b);
-});
-$("#go").onclick = () => ask();
-$("#q").addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
-</script>
-</body>
-</html>
+    while (co.length > 1 &&

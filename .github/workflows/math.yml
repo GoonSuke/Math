@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>MathMind – offline math solver</title>
+<title>GoonSuke – offline math solver</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
 <style>
 :root{--bg:#e3f6ef;--card:#f3fcf9;--ink:#0e2b2b;--mute:#467370;--acc:#08857f;--accink:#fff;--line:#b4e2d6;--chip:#cdeee5;--err:#a3352b;
@@ -45,7 +45,7 @@ h3{font-size:1rem;margin:10px 0 2px}
 </head>
 <body>
 <main>
-<h1>MathMind</h1>
+<h1>GoonSuke</h1>
 <p class="sub">A math solver that runs entirely in your browser. No API key, no server.</p>
 <div class="bar"><input id="q" placeholder="Try: what is sin?" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
 <div class="chips" id="chips"></div>

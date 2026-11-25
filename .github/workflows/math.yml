@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MathMind – offline math solver</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
+<style>
+:root{--bg:#e3f6ef;--card:#f3fcf9;--ink:#0e2b2b;--mute:#467370;--acc:#08857f;--accink:#fff;--line:#b4e2d6;--chip:#cdeee5;--err:#a3352b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}}
+:root[data-theme="dark"]{--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
+main{max-width:680px;margin:0 auto;padding:32px 18px 48px}
+h1{font-size:2rem;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 22px}
+.bar{display:flex;gap:8px}
+input{flex:1;min-width:0;font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;padding:13px 14px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+input:focus,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:0;border-radius:10px}
+.go{padding:0 20px;background:var(--acc);color:var(--accink);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 26px}
+.chip{padding:6px 11px;background:var(--chip);color:var(--ink);font-size:.85rem;font-family:ui-monospace,Menlo,Consolas,monospace}
+.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+.q{color:var(--mute);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;overflow-wrap:anywhere}
+.a{font:600 1.5rem/1.35 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;overflow-wrap:anywhere}
+.err{color:var(--err);font-size:1rem}
+ul{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:.9rem}
+.hint{color:var(--mute);font-size:.88rem;margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+<h1>MathMind</h1>
+<p class="sub">A math solver that runs entirely in your browser. No API key, no server.</p>
+<div class="bar"><input id="q" placeholder="Try: solve x^2 - 5x + 6 = 0" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
+<div class="chips" id="chips"></div>
+<div id="out"></div>
+<p class="hint">It handles arithmetic, exact fractions, equations with one unknown, derivatives, definite integrals, simplify and expand, prime factors, percentages, matrices (det, inv), and functions like gcd, lcm, factorial and combinations. It can’t read free-form word problems.</p>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const fm = math.create(math.all, {number: "Fraction"});
+const F = v => math.format(v, {precision: 12});
+const cl = x => { const r = Math.round(x); return Math.abs(x - r) < 1e-9 ? r : +x.toPrecision(10); };
+const C = z => {
+  const re = cl(z.re), im = cl(z.im), a = Math.abs(im) === 1 ? "" : Math.abs(im);
+  if (Math.abs(z.im) < 1e-9) return "" + re;
+  if (Math.abs(z.re) < 1e-9) return (im < 0 ? "-" : "") + a + "i";
+  return re + (im < 0 ? " - " : " + ") + a + "i";
+};
+const uv = e => { const s = math.parse(e).filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name); return s[0] || "x"; };
+
+function polyRoots(co) {
+  const n = co.length - 1, a = co.map(v => v / co[n]);
+  const z = []; for (let k = 0; k < n; k++) z.push(math.pow(math.complex(0.4, 0.9), k));
+  for (let it = 0; it < 500; it++) {
+    let d = 0;
+    for (let i = 0; i < n; i++) {
+      let v = math.complex(1, 0);
+      for (let j = n - 1; j >= 0; j--) v = math.add(math.multiply(v, z[i]), a[j]);
+      let den = math.complex(1, 0);
+      for (let j = 0; j < n; j++) if (j !== i) den = math.multiply(den, math.subtract(z[i], z[j]));
+      const dl = math.divide(v, den);
+      z[i] = math.subtract(z[i], dl);
+      d = Math.max(d, math.abs(dl));
+    }
+    if (d < 1e-14) break;
+  }
+  return z;
+}
+
+function solve(s) {
+  const [l, r] = s.includes("=") ? s.split("=") : [s, "0"];
+  const e = "(" + l + ")-(" + r + ")", node = math.parse(e);
+  const vs = [...new Set(node.filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name))];
+  if (vs.length !== 1) throw Error("I can solve equations with exactly one unknown, like solve 2x + 3 = 11");
+  const v = vs[0], steps = ["Move everything to one side: " + e + " = 0"];
+  let co = null;
+  try { co = math.rationalize(e, {}, true).coefficients.map(Number); if (co.some(isNaN)) co = null; } catch (_) {}
+  if (co) {
+    while (co.length > 1 && Math.abs(co[co.length - 1]) < 1e-12) co.pop();
+    const n = co.length - 1;
+    steps.push("Polynomial of degree " + n + ", coefficients from lowest power: [" + co.map(cl).join(", ") + "]");
+    if (n === 0) return {ans: Math.abs(co[0]) < 1e-12 ? "Every value of " + v + " works" : "No solution", steps};
+    if (n === 2) steps.push("Discriminant b² − 4ac = " + cl(co[1] * co[1] - 4 * co[2] * co[0]));
+    if (n > 2) steps.push("Roots found with the Durand–Kerner iteration");
+    const rs = n === 1 ? [{re: -co[0] / co[1], im: 0}] : polyRoots(co);
+    const txt = [...new Set(rs.map(C))];
+    rs.filter(z => Math.abs(z.im) < 1e-9).slice(0, 1).forEach(z => {
+      steps.push("Check: plugging " + v + " = " + C(z) + " back in leaves a residual of " + F(node.evaluate({[v]: z.re})));
+    });
+    return {ans: txt.map(t => v + " = " + t).join("   "), steps};
+  }
+  steps.push("Not a polynomial, so I scan [-100, 100] for sign changes and refine each by bisection");
+  const f = x => { try { const y = node.evaluate({[v]: x}); return typeof y === "number" && isFinite(y) ? y : NaN; } catch (_) { return NaN; } };
+  const out = new Set(); let px = -100, py = f(px);
+  for (let x = -99.99; x <= 100; x += 0.01) {
+    const y = f(x);
+    if (py * y < 0) { let a = px, b = x; for (let i = 0; i < 60; i++) { const m = (a + b) / 2; if (f(a) * f(m) <= 0) b = m; else a = m; } out.add(cl((a + b) / 2)); }
+    else if (y === 0) out.add(cl(x));
+    px = x; py = y;
+  }
+  return {ans: out.size ? [...out].map(t => v + " ≈ " + t).join("   ") : "No real solutions found in [-100, 100]", steps};
+}
+
+function run(raw) {
+  const q = raw.trim().replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-").replace(/\?+$/, "")
+    .replace(/^(what(?:'|’)?s|what is|calculate|compute|evaluate|find)\s+/i, "");
+  let m;
+  if (m = q.match(/^(?:derivative|differentiate|diff|d\/dx)(?:\s+of)?\s+(.+)$/i)) {
+    const v = uv(m[1]);
+    return {ans: "d/d" + v + " = " + math.simplify(math.derivative(m[1], v)).toString(), steps: ["Applied the power, product, quotient and chain rules, then simplified"]};
+  }
+  if (m = q.match(/^(?:integrate|integral of)\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+)$/i)) {
+    const A = math.evaluate(m[2]), B = math.evaluate(m[3]), c = math.compile(m[1]), v = uv(m[1]), n = 2000, h = (B - A) / n;
+    let s = 0;
+    for (let i = 0; i <= n; i++) s += (i === 0 || i === n ? 1 : i % 2 ? 4 : 2) * c.evaluate({[v]: A + i * h});
+    return {ans: "≈ " + F(s * h / 3), steps: ["Simpson’s rule with 2000 intervals on [" + F(A) + ", " + F(B) + "]"]};
+  }
+  if (m = q.match(/^(?:factor|factorise|factorize|prime factors? of)\s+(\d+)$/i)) {
+    const N = +m[1]; if (N < 2 || N > 1e14) throw Error("Use a whole number from 2 to 100,000,000,000,000");
+    const f = {}; let r = N;
+    for (let p = 2; p * p <= r; p++) while (r % p === 0) { f[p] = (f[p] || 0) + 1; r /= p; }
+    if (r > 1) f[r] = (f[r] || 0) + 1;
+    const ent = Object.entries(f), divs = ent.reduce((t, [, e]) => t * (e + 1), 1);
+    return {ans: ent.length === 1 && ent[0][1] === 1 ? N + " is prime" : N + " = " + ent.map(([p, e]) => e > 1 ? p + "^" + e : p).join(" × "), steps: ["Trial division up to √" + N, "It has " + divs + " positive divisors"]};
+  }
+  if (m = q.match(/^simplify\s+(.+)$/i)) return {ans: math.simplify(m[1]).toString(), steps: ["Applied algebraic rewrite rules until nothing more reduced"]};
+  if (m = q.match(/^expand\s+(.+)$/i)) return {ans: math.rationalize(m[1]).toString(), steps: ["Multiplied out and collected like terms"]};
+  if (m = q.match(/^(-?[\d.]+)\s*%\s*of\s+(.+)$/i)) {
+    return {ans: F(math.evaluate("(" + m[1] + "/100)*(" + m[2] + ")")), steps: [m[1] + "% means " + m[1] + "/100, so I multiplied that by " + m[2]]};
+  }
+  if (/^solve\b/i.test(q) || q.includes("=")) return solve(q.replace(/^solve\s*(for\s+\w+\s*:?)?/i, ""));
+  let val;
+  try { val = math.evaluate(q); }
+  catch (err) {
+    if (/Undefined symbol/.test(err.message)) return {ans: math.simplify(q).toString(), steps: ["It has unknown symbols, so I simplified it symbolically"]};
+    throw err;
+  }
+  const steps = ["Interpreted as: " + math.parse(q).toString()];
+  let ans = F(val);
+  try {
+    const x = fm.evaluate(q);
+    if (math.isFraction(x) && x.d !== 1) { ans = x.s * x.n + "/" + x.d + "  ≈  " + ans; steps.push("Exact fraction arithmetic keeps the result precise"); }
+  } catch (_) {}
+  return {ans, steps};
+}
+
+function ask(text) {
+  const q = (text || $("#q").value).trim(); if (!q) return;
+  const card = document.createElement("article"); card.className = "card";
+  const h = document.createElement("div"); h.className = "q"; h.textContent = q; card.append(h);
+  const a = document.createElement("div"); a.className = "a";
+  try {
+    const r = run(q); a.textContent = r.ans; card.append(a);
+    if (r.steps && r.steps.length) { const u = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; u.append(li); }); card.append(u); }
+  } catch (e) { a.className = "a err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; card.append(a); }
+  $("#out").prepend(card); $("#q").value = "";
+}
+
+["solve x^2 - 5x + 6 = 0", "derivative of sin(x)*x^2", "integrate x^2 from 0 to 3", "factor 360", "15% of 80", "1/3 + 2/5", "det([[1,2],[3,4]])", "solve cos(x) = x", "simplify (x^2-1)/(x-1)"].forEach(t => {
+  const b = document.createElement("button"); b.className = "chip"; b.textContent = t; b.onclick = () => ask(t); $("#chips").append(b);
+});
+$("#go").onclick = () => ask();
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+</script>
+</body>
+</html>

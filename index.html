@@ -3,42 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GoonSuke – offline math solver</title>
+<title>MathMind</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
 <style>
-:root{--bg:#e3f6ef;--card:#f3fcf9;--ink:#0e2b2b;--mute:#467370;--acc:#08857f;--accink:#fff;--line:#b4e2d6;--chip:#cdeee5;--err:#a3352b;
+:root{--bg:#f6fcf8;--panel:#ffffff;--ink:#14312f;--mute:#5f817d;--acc:#0aa3b8;--accink:#ffffff;--line:#e0f0e8;--ubub:#d9f4f8;--chip:#ecf8f1;--err:#b3392f;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}}
-:root[data-theme="dark"]{--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a18;--panel:#142624;--ink:#e0f3ef;--mute:#8db9b3;--acc:#3cd2e6;--accink:#04222a;--line:#24413d;--ubub:#17434b;--chip:#1a312e;--err:#ff9d90}}
+:root[data-theme="dark"]{--bg:#0d1a18;--panel:#142624;--ink:#e0f3ef;--mute:#8db9b3;--acc:#3cd2e6;--accink:#04222a;--line:#24413d;--ubub:#17434b;--chip:#1a312e;--err:#ff9d90}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Avenir Next","Segoe UI",system-ui,sans-serif}
-main{max-width:680px;margin:0 auto;padding:32px 18px 48px}
-h1{font-size:2rem;margin:0 0 4px;letter-spacing:-.02em}
-.sub{color:var(--mute);margin:0 0 22px}
-.bar{display:flex;gap:8px}
-input{flex:1;min-width:0;font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;padding:13px 14px;border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
-input:focus,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
-button{font:inherit;cursor:pointer;border:0;border-radius:10px}
-.go{padding:0 20px;background:var(--acc);color:var(--accink);font-weight:700}
-.chips{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 26px}
-.chip{padding:6px 11px;background:var(--chip);color:var(--ink);font-size:.85rem;font-family:ui-monospace,Menlo,Consolas,monospace}
-.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:10px;padding:14px 16px;margin-bottom:12px}
-.q{color:var(--mute);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;overflow-wrap:anywhere}
-.a{font:600 1.5rem/1.35 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;overflow-wrap:anywhere}
-.err{color:var(--err);font-size:1rem}
-ul{margin:6px 0 0;padding-left:18px;color:var(--mute);font-size:.9rem}
-.hint{color:var(--mute);font-size:.88rem;margin-top:28px}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif}
+main{height:100%;max-width:560px;margin:0 auto;padding:0 12px;display:flex;flex-direction:column}
+header{display:flex;align-items:baseline;gap:8px;padding:12px 0 8px;flex:none}
+h1{font-size:1rem;margin:0;letter-spacing:-.01em}
+h1::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-right:6px}
+.sub{font-size:.7rem;color:var(--mute)}
+#log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding:4px 0 10px}
+.m{max-width:88%;padding:7px 10px;border-radius:12px;overflow-wrap:anywhere}
+.u{align-self:flex-end;background:var(--ubub);border-bottom-right-radius:4px;font:.78rem ui-monospace,Menlo,Consolas,monospace}
+.b{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.b.wide{max-width:96%}
+.chips{display:flex;gap:5px;overflow-x:auto;padding:4px 0 6px;flex:none}
+.chip{white-space:nowrap;padding:3px 9px;background:var(--chip);color:var(--ink);font-size:.68rem;border-radius:11px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.bar{display:flex;gap:6px;padding:4px 0 12px;flex:none}
+#q{flex:1;min-width:0;font:.8rem ui-monospace,Menlo,Consolas,monospace;padding:7px 11px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink)}
+#q:focus,button:focus-visible,.viz input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:0}
+.go{padding:0 14px;background:var(--acc);color:var(--accink);font-weight:700;font-size:.78rem;border-radius:16px}
+.a{font:600 .85rem/1.4 ui-monospace,Menlo,Consolas,monospace}
+.err{color:var(--err);font:.8rem system-ui,sans-serif}
+ul{margin:4px 0 0;padding-left:16px;color:var(--mute);font-size:.72rem}
+h3{font-size:.85rem;margin:2px 0 1px}
+.lead{margin:1px 0 6px;font-size:.8rem;font-weight:600}
+.sec{margin:7px 0}.sec b{font-size:.68rem;color:var(--acc);text-transform:uppercase;letter-spacing:.03em}.sec p{margin:1px 0 0;font-size:.78rem}
+.viz svg{width:100%;max-width:150px;display:block;margin:2px auto}
+.viz input{display:block;width:100%;accent-color:var(--acc)}
+.viz .c{fill:none;stroke:var(--line);stroke-width:2}.viz .ax{stroke:var(--line)}
+.viz .rl{stroke:var(--ink);stroke-width:2}.viz .sl{stroke:var(--acc);stroke-width:4}
+.viz .cl{stroke:var(--mute);stroke-width:4}.viz .pt{fill:var(--ink)}
+.ro{font:.68rem ui-monospace,Menlo,Consolas,monospace;color:var(--mute);text-align:center}
+.flash{animation:fl .9s}
+@keyframes fl{0%,60%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:2px solid var(--acc)}}
 </style>
 </head>
 <body>
 <main>
-<h1>GoonSuke</h1>
-<p class="sub">A math solver that runs entirely in your browser. No API key, no server.</p>
-<div class="bar"><input id="q" placeholder="Try: solve x^2 - 5x + 6 = 0" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
+<header><h1>MathMind</h1><span class="sub">runs in your browser · no API key</span></header>
+<div id="log" aria-live="polite"></div>
 <div class="chips" id="chips"></div>
-<div id="out"></div>
-<p class="hint">It handles arithmetic, exact fractions, equations with one unknown, derivatives, definite integrals, simplify and expand, prime factors, percentages, matrices (det, inv), and functions like gcd, lcm, factorial and combinations. It can’t read free-form word problems.</p>
+<div class="bar"><input id="q" placeholder="Message MathMind…" autocomplete="off" aria-label="Message"><button class="go" id="go">Send</button></div>
 </main>
 <script>
 const $ = s => document.querySelector(s);
@@ -52,6 +67,103 @@ const C = z => {
   return re + (im < 0 ? " - " : " + ") + a + "i";
 };
 const uv = e => { const s = math.parse(e).filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name); return s[0] || "x"; };
+
+/* Concepts: [aliases, title, intro, [[heading, text], ...], showUnitCircle] */
+const DB = [
+[["sin","sine","sine function","sin function"],"Sine (sin)","Sine takes an angle and gives back a number between −1 and 1. Picture turning through that angle on a circle: the sine is how high you have climbed above the horizontal line through the center.",[
+["In a right triangle","Pick one acute angle θ. The side facing it is the opposite, and the longest side is the hypotenuse. Then sin θ = opposite ÷ hypotenuse (the “SOH” in SOH-CAH-TOA). The ratio depends only on the angle, not the triangle’s size, and it can’t exceed 1 because the hypotenuse is always the longest side."],
+["On the unit circle","On a circle of radius 1, sin θ is the height of the point reached after turning θ from the right-hand side: the cyan line above. It’s positive in the top half and negative in the bottom half, and it works for any angle, including past 90° and below 0°, which triangles alone can’t handle. Drag the slider to see it."],
+["Shape and key values","Its graph is a smooth wave: 0 at 0°, peak 1 at 90°, back to 0 at 180°, trough −1 at 270°, then it repeats every 360° (2π radians). Exact values: sin 0° = 0, sin 30° = 1/2, sin 45° = √2/2 ≈ 0.707, sin 60° = √3/2 ≈ 0.866, sin 90° = 1."],
+["Worked example","A 5 m ladder leans at 60° to the ground. The height it reaches is 5 × sin 60° = 5 × 0.866 ≈ 4.33 m. Type 5 * sin(60 deg) to check."],
+["Useful facts","sin²θ + cos²θ = 1 · sin(−θ) = −sin θ · sin(90° − θ) = cos θ · The inverse, asin, goes backwards: asin(0.5) ≈ 0.5236 rad, which is 30°. Try “sin of 30” for a quick value."]],true],
+[["cos","cosin","cosine","cosine function","cos function"],"Cosine (cos)","Cosine takes an angle and gives back a number between −1 and 1. On a circle, it is how far right (or left) of the center you are after turning through that angle.",[
+["In a right triangle","cos θ = adjacent ÷ hypotenuse (the “CAH” in SOH-CAH-TOA), where the adjacent side is the one touching θ that isn’t the hypotenuse. The smaller the angle, the closer the adjacent side gets to the hypotenuse, so cos 0° = 1."],
+["On the unit circle","cos θ is the horizontal position of the point at angle θ: the grey horizontal line above. It is 1 at 0°, 0 at 90° and −1 at 180°. Cosine is just sine shifted by 90°, since cos θ = sin(90° − θ)."],
+["Shape and key values","The same wave as sine but starting at its peak: 1 at 0°, 0 at 90°, −1 at 180°, 0 at 270°, 1 at 360°. Exact values: cos 30° = √3/2 ≈ 0.866, cos 45° = √2/2 ≈ 0.707, cos 60° = 1/2."],
+["Worked example","A ramp rises at 20° and its surface is 8 m long. Its horizontal run is 8 × cos 20° ≈ 7.52 m. Type 8 * cos(20 deg) to check."],
+["Useful facts","cos(−θ) = cos θ, so it’s symmetric · cos²θ + sin²θ = 1 · The law of cosines, c² = a² + b² − 2ab·cos C, extends the Pythagorean theorem to any triangle · acos(0.5) gives 60° (as radians)."]],true],
+[["tan","tangent","tangent function","tan function"],"Tangent (tan)","Tangent is the slope of the line at a given angle: how many units it rises for each unit it moves right. Unlike sine and cosine, it can be any number from −∞ to ∞.",[
+["In a right triangle","tan θ = opposite ÷ adjacent (the “TOA” in SOH-CAH-TOA). It also equals sin θ ÷ cos θ, since the hypotenuse cancels out."],
+["On the unit circle","Extend the angle’s line until it meets the vertical line x = 1; the tangent is how high it meets it. At 45° the slope is 1. At 90° the line is vertical, cosine is 0 and tangent is undefined, which is why the readout above says so. The slider computes tan as sin ÷ cos."],
+["Shape and key values","The graph repeats every 180° (π) and has vertical asymptotes at 90°, 270° and so on. tan 0° = 0, tan 30° = √3/3 ≈ 0.577, tan 45° = 1, tan 60° = √3 ≈ 1.732."],
+["Worked example","You stand 20 m from a tree and look at its top at a 35° angle. Its height is 20 × tan 35° ≈ 14.0 m. Type 20 * tan(35 deg) to check."],
+["Useful facts","tan(−θ) = −tan θ · 1 + tan²θ = sec²θ · atan(1) gives 45° (as radians). The slope of any line is the tangent of the angle it makes with the x-axis."]],true],
+[["sec","secant","csc","cosecant","cot","cotangent","reciprocal trig functions"],"Secant, cosecant and cotangent","These are the three reciprocal trig functions, handy for simplifying.",[["Definitions","sec θ = 1/cos θ · csc θ = 1/sin θ · cot θ = 1/tan θ = cos θ/sin θ. Each is undefined wherever its denominator is 0. Type sec(60 deg) to try it: it’s ≈ 2."]]],
+[["trig","trigonometry","soh cah toa","sohcahtoa","soh-cah-toa","trig functions","trigonometric functions"],"Trigonometry","Trigonometry connects angles to lengths. Its three core functions, sine, cosine and tangent, are ratios of a right triangle’s sides.",[
+["SOH-CAH-TOA","sin θ = opposite/hypotenuse · cos θ = adjacent/hypotenuse · tan θ = opposite/adjacent."],
+["Going the other way","If you know two sides and need the angle, use asin, acos or atan. In a 3-4-5 triangle the angle opposite the 3 is atan(3/4) ≈ 36.87°. Type atan(3/4) * 180 / pi to see it in degrees."],
+["Why it matters","Waves, sound, light, circuits, navigation, animation and engineering all lean on sine and cosine, because anything that repeats smoothly follows them."]],true],
+[["unit circle"],"Unit circle","A circle of radius 1 centered at the origin. The point at angle θ has coordinates (cos θ, sin θ).",[["Why it’s useful","It extends sine and cosine to every angle, with signs set by the quadrant, and makes identities visible: x² + y² = 1 is exactly sin²θ + cos²θ = 1."]],true],
+[["pythagorean theorem","pythagoras theorem","pythagorean","pythagoras"],"Pythagorean theorem","In any right triangle, the square of the longest side (the hypotenuse) equals the sum of the squares of the other two sides.",[
+["Formula","a² + b² = c², where c is the hypotenuse. With legs 3 and 4, c = √(9 + 16) = 5. Type sqrt(3^2 + 4^2) to check."],
+["Why it works","Four copies of the triangle can fill a square of side a + b in two ways: around a c × c square, or around an a × a and a b × b square. The leftover areas must match, so c² = a² + b²."],
+["Uses","Distance between two points: √((x₂−x₁)² + (y₂−y₁)²). It is also the source of sin²θ + cos²θ = 1."]]],
+[["radian","radians","degree","degrees"],"Radians and degrees","A radian measures an angle by the arc it cuts: one radian is the angle whose arc is as long as the radius.",[["Converting","A full turn is 2π radians = 360°, so 180° = π rad and 1 rad ≈ 57.296°. Degrees to radians: multiply by π/180. Type 90 deg to rad to try it."],["Why radians","Calculus formulas like d/dx sin x = cos x only hold in radians, so math software defaults to them."]]],
+[["pi","π"],"Pi (π)","Pi, about 3.14159265, is the ratio of any circle’s circumference to its diameter.",[["Where it shows up","Circumference = 2πr and area = πr², and π also appears in waves, probability and physics. It’s irrational: its digits never end or repeat."]]],
+[["e","euler's number","eulers number","euler number"],"Euler’s number (e)","e ≈ 2.71828 is the base of natural logarithms.",[["What makes it special","eˣ is its own derivative, so it describes continuous growth such as compound interest: e = lim (1 + 1/n)ⁿ. Type e^2 to try it."]]],
+[["log","logarithm","logarithms","ln","natural log","natural logarithm"],"Logarithm","A logarithm answers: what power must the base be raised to in order to get this number?",[["Example","log₂(8) = 3 because 2³ = 8. Type log(8, 2) to check. Here log(x) is the natural log (ln) and log10(x) is base 10."],["Rules","log(ab) = log a + log b · log(a/b) = log a − log b · log(aᵇ) = b·log a. They turn multiplication into addition."]]],
+[["exponent","exponents","power","powers"],"Exponent","An exponent says how many times to multiply a number by itself.",[["Rules","2⁵ = 32 · x⁰ = 1 · x⁻ⁿ = 1/xⁿ · xᵃ·xᵇ = xᵃ⁺ᵇ · (xᵃ)ᵇ = xᵃᵇ. Type 2^5 to try it."]]],
+[["square root","sqrt","root","roots"],"Square root","The square root of a number is the value that, multiplied by itself, gives that number.",[["Examples","√25 = 5 because 5 × 5 = 25. Negative numbers have imaginary roots, so √(−1) = i. Type sqrt(144) to try it."]]],
+[["derivative","derivatives","differentiation"],"Derivative","The derivative measures how fast a function is changing at each point: the slope of its tangent line.",[["Rules","Power: d/dx xⁿ = n·xⁿ⁻¹ · Product: (fg)′ = f′g + fg′ · Chain: (f(g(x)))′ = f′(g(x))·g′(x) · d/dx sin x = cos x · d/dx eˣ = eˣ"],["Try it","Type derivative of x^3 + 2x"]]],
+[["integral","integrals","integration","antiderivative"],"Integral","An integral adds up infinitely many tiny slices; a definite integral gives the area under a curve between two points.",[["Key idea","∫ₐᵇ f(x) dx = F(b) − F(a), where F′ = f. Power rule: ∫xⁿ dx = xⁿ⁺¹/(n+1) + C. This page computes definite integrals numerically: type integrate x^2 from 0 to 3 (the answer is 9)."]]],
+[["quadratic formula","quadratic equation","quadratic","quadratics"],"Quadratic formula","A quadratic equation ax² + bx + c = 0 is solved by the quadratic formula.",[["Formula","x = (−b ± √(b² − 4ac)) / 2a. The discriminant b² − 4ac decides: positive gives two real roots, zero gives one, negative gives two complex roots. Type solve x^2 - 5x + 6 = 0."]]],
+[["prime","prime number","primes","prime numbers"],"Prime number","A prime is a whole number greater than 1 whose only positive divisors are 1 and itself.",[["Facts","The first primes are 2, 3, 5, 7, 11, 13. Two is the only even prime. Every whole number above 1 breaks into primes in exactly one way. Type factor 360."]]],
+[["gcd","greatest common divisor","greatest common factor","gcf","hcf","lcm","least common multiple"],"GCD and LCM","The GCD is the largest whole number that divides two numbers evenly; the LCM is the smallest positive number both divide.",[["Examples","gcd(12, 18) = 6 and lcm(4, 6) = 12, linked by lcm(a, b) = a·b / gcd(a, b). Type gcd(12, 18) to try it."]]],
+[["factorial","factorials"],"Factorial","n! is the product of all whole numbers from 1 up to n.",[["Example","5! = 5 × 4 × 3 × 2 × 1 = 120, and by convention 0! = 1. Type 5! to try it."]]],
+[["permutation","permutations","combination","combinations"],"Permutations and combinations","A permutation counts ordered arrangements; a combination counts selections where order doesn’t matter.",[["Formulas","Permutations: n!/(n − r)! · Combinations: n!/(r!(n − r)!). Type combinations(5, 2) to get 10."]]],
+[["probability"],"Probability","Probability is the chance an event happens, from 0 (impossible) to 1 (certain).",[["Basic rule","P(event) = favorable outcomes ÷ total equally likely outcomes. Rolling a 4 on a fair die is 1/6."]]],
+[["mean","average","median","mode"],"Mean, median and mode","Three ways to describe the center of a data set.",[["Definitions","Mean: add the values and divide by how many there are. Median: the middle value once sorted. Mode: the most frequent value. Type mean([2, 4, 4, 10]) to try it."]]],
+[["matrix","matrices","determinant","det"],"Matrices and determinants","A matrix is a rectangular grid of numbers that represents a linear transformation.",[["Basics","The determinant of [[a,b],[c,d]] is ad − bc, and 0 means no inverse exists. Type det([[1,2],[3,4]]) or inv([[1,2],[3,4]])."]]],
+[["imaginary number","imaginary numbers","complex number","complex numbers","i"],"Imaginary and complex numbers","The imaginary unit i is defined by i² = −1, and a complex number looks like a + bi.",[["Why they exist","They give square roots to negative numbers: √(−9) = 3i. Type (2 + 3i) * (1 - i) to try it."]]]
+];
+const K = {}; DB.forEach(c => c[0].forEach(a => K[a] = c));
+const QW = /^(what'?s|whats|what is|what are|what does|how does|define|definition of|explain|meaning of|tell me about|describe)\s+/;
+const lev = (a, b) => { const d = [...Array(b.length + 1).keys()]; for (let i = 1; i <= a.length; i++) { let p = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] === b[j - 1] ? 0 : 1)); p = t; } } return d[b.length]; };
+function look(p) {
+  p = p.replace(/\s+(function|functions|mean|means|work|works)$/, "");
+  if (K[p]) return K[p];
+  const s = p.replace(/s$/, ""); if (K[s]) return K[s];
+  if (p.length >= 5 && /^[a-z' -]+$/.test(p)) { let best = null; for (const k in K) if (k.length >= 5 && lev(p, k) <= 1) best = K[k]; return best; }
+  return null;
+}
+function concept(raw) {
+  let t = raw.trim().toLowerCase().replace(/’/g, "'").replace(/[?!.]+$/, "");
+  const asked = QW.test(t) || /\?\s*$/.test(raw);
+  t = t.replace(QW, "").replace(/^(a|an|the)\s+/, "").trim();
+  const parts = t.split(/\s*(?:,|&|\band\b|\bor\b)\s*/).filter(Boolean).map(p => p.replace(/^(a|an|the)\s+/, ""));
+  if (!parts.length) return null;
+  const hit = parts.map(look);
+  if (hit.some(x => !x)) return null;
+  if (!asked && parts.length === 1) { try { if (typeof math.evaluate(t) === "number") return null; } catch (_) {} }
+  return {concepts: [...new Set(hit)]};
+}
+
+function trigViz() {
+  const w = document.createElement("div"); w.className = "viz";
+  w.innerHTML = '<svg viewBox="-125 -125 250 250" role="img" aria-label="Unit circle"><circle class="c" r="100"/><line class="ax" x1="-120" x2="120"/><line class="ax" y1="-120" y2="120"/><line class="rl"/><line class="sl"/><line class="cl"/><circle class="pt" r="5"/></svg><input type="range" min="0" max="360" value="30" aria-label="Angle in degrees"><div class="ro"></div>';
+  const g = s => w.querySelector(s), set = (e, a) => { for (const k in a) e.setAttribute(k, a[k]); }, n = v => (Math.abs(v) < 5e-4 ? 0 : v).toFixed(3);
+  const up = () => {
+    const d = +g("input").value, t = d * Math.PI / 180, c = Math.cos(t), s = Math.sin(t), x = c * 100, y = -s * 100;
+    set(g(".rl"), {x1: 0, y1: 0, x2: x, y2: y}); set(g(".sl"), {x1: x, y1: 0, x2: x, y2: y});
+    set(g(".cl"), {x1: 0, y1: 0, x2: x, y2: 0}); set(g(".pt"), {cx: x, cy: y});
+    g(".ro").textContent = "θ = " + d + "°  ·  sin = " + n(s) + "  ·  cos = " + n(c) + "  ·  tan = " + (Math.abs(c) < 1e-9 ? "undefined" : n(s / c));
+  };
+  g("input").oninput = up; up(); return w;
+}
+function renderConcepts(box, list) {
+  let viz = false;
+  list.forEach(c => {
+    const h = document.createElement("h3"); h.textContent = c[1]; box.append(h);
+    const p = document.createElement("p"); p.className = "lead"; p.textContent = c[2]; box.append(p);
+    if (c[4] && !viz) { box.append(trigViz()); viz = true; }
+    c[3].forEach(([hd, tx]) => {
+      const s = document.createElement("div"); s.className = "sec";
+      const b = document.createElement("b"); b.textContent = hd;
+      const d = document.createElement("p"); d.textContent = tx;
+      s.append(b, d); box.append(s);
+    });
+  });
+}
 
 function polyRoots(co) {
   const n = co.length - 1, a = co.map(v => v / co[n]);
@@ -107,9 +219,14 @@ function solve(s) {
 }
 
 function run(raw) {
+  const cc = concept(raw); if (cc) return cc;
   const q = raw.trim().replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-").replace(/\?+$/, "")
     .replace(/^(what(?:'|’)?s|what is|calculate|compute|evaluate|find)\s+/i, "");
   let m;
+  if (m = q.match(/^(sin|sine|cos|cosine|tan|tangent)\s+(?:of\s+)?(-?[\d.]+)\s*(deg|degrees?|°|rad|radians?)?$/i)) {
+    const fn = m[1].slice(0, 3).toLowerCase(), rad = /^rad/i.test(m[3] || ""), ang = +m[2], v = math[fn](rad ? ang : ang * Math.PI / 180);
+    return {ans: fn + "(" + ang + (rad ? " rad" : "°") + ") = " + F(Math.abs(v) < 1e-12 ? 0 : v), steps: [rad ? "Angle read in radians" : "Angle read in degrees (add rad for radians)"]};
+  }
   if (m = q.match(/^(?:derivative|differentiate|diff|d\/dx)(?:\s+of)?\s+(.+)$/i)) {
     const v = uv(m[1]);
     return {ans: "d/d" + v + " = " + math.simplify(math.derivative(m[1], v)).toString(), steps: ["Applied the power, product, quotient and chain rules, then simplified"]};
@@ -140,6 +257,7 @@ function run(raw) {
     if (/Undefined symbol/.test(err.message)) return {ans: math.simplify(q).toString(), steps: ["It has unknown symbols, so I simplified it symbolically"]};
     throw err;
   }
+  if (typeof val === "function") throw Error("That’s a function and needs an input, like " + q + "(30 deg). Or ask “what is " + q + "?”");
   const steps = ["Interpreted as: " + math.parse(q).toString()];
   let ans = F(val);
   try {
@@ -149,19 +267,34 @@ function run(raw) {
   return {ans, steps};
 }
 
+const log = $("#log");
+const bubble = cls => { const d = document.createElement("div"); d.className = "m " + cls; log.append(d); return d; };
+let lastKey = "", lastBub = null;
 function ask(text) {
   const q = (text || $("#q").value).trim(); if (!q) return;
-  const card = document.createElement("article"); card.className = "card";
-  const h = document.createElement("div"); h.className = "q"; h.textContent = q; card.append(h);
-  const a = document.createElement("div"); a.className = "a";
+  $("#q").value = "";
+  const key = q.toLowerCase().replace(/\s+/g, " ");
+  if (key === lastKey && lastBub) {
+    lastBub.scrollIntoView({block: "start", behavior: "smooth"});
+    lastBub.classList.remove("flash"); void lastBub.offsetWidth; lastBub.classList.add("flash");
+    return;
+  }
+  const u = bubble("u"); u.textContent = q;
+  const b = bubble("b");
   try {
-    const r = run(q); a.textContent = r.ans; card.append(a);
-    if (r.steps && r.steps.length) { const u = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; u.append(li); }); card.append(u); }
-  } catch (e) { a.className = "a err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; card.append(a); }
-  $("#out").prepend(card); $("#q").value = "";
+    const r = run(q);
+    if (r.concepts) { b.classList.add("wide"); renderConcepts(b, r.concepts); }
+    else {
+      const a = document.createElement("div"); a.className = "a"; a.textContent = r.ans; b.append(a);
+      if (r.steps && r.steps.length) { const ul = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; ul.append(li); }); b.append(ul); }
+    }
+  } catch (e) { const a = document.createElement("div"); a.className = "err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; b.append(a); }
+  u.scrollIntoView({block: "start", behavior: "smooth"});
+  lastKey = key; lastBub = b;
 }
 
-["solve x^2 - 5x + 6 = 0", "derivative of sin(x)*x^2", "integrate x^2 from 0 to 3", "factor 360", "15% of 80", "1/3 + 2/5", "det([[1,2],[3,4]])", "solve cos(x) = x", "simplify (x^2-1)/(x-1)"].forEach(t => {
+bubble("b").textContent = "Hi! Ask me a math question or the meaning of a term, like “what is sin?”. I can also calculate (12 * (3 + 4)) and solve equations (solve x^2 - 5x + 6 = 0).";
+["what is sin?", "what is cosine?", "tangent", "sin of 30", "pythagorean theorem", "what is a derivative?", "solve x^2 - 5x + 6 = 0", "factor 360", "1/3 + 2/5"].forEach(t => {
   const b = document.createElement("button"); b.className = "chip"; b.textContent = t; b.onclick = () => ask(t); $("#chips").append(b);
 });
 $("#go").onclick = () => ask();

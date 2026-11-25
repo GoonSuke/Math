@@ -3,54 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GoonSuke – offline math solver</title>
+<title>MathMind</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.4.2/math.min.js"></script>
 <style>
-:root{--bg:#e3f6ef;--card:#f3fcf9;--ink:#0e2b2b;--mute:#467370;--acc:#08857f;--accink:#fff;--line:#b4e2d6;--chip:#cdeee5;--err:#a3352b;
+:root{--bg:#f6fcf8;--panel:#ffffff;--ink:#14312f;--mute:#5f817d;--acc:#0aa3b8;--accink:#ffffff;--line:#e0f0e8;--ubub:#d9f4f8;--chip:#ecf8f1;--err:#b3392f;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}}
-:root[data-theme="dark"]{--bg:#0b2220;--card:#10302d;--ink:#dcf5ef;--mute:#86bdb5;--acc:#5fe0cf;--accink:#06231f;--line:#245049;--chip:#173d38;--err:#ff9d90}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a18;--panel:#142624;--ink:#e0f3ef;--mute:#8db9b3;--acc:#3cd2e6;--accink:#04222a;--line:#24413d;--ubub:#17434b;--chip:#1a312e;--err:#ff9d90}}
+:root[data-theme="dark"]{--bg:#0d1a18;--panel:#142624;--ink:#e0f3ef;--mute:#8db9b3;--acc:#3cd2e6;--accink:#04222a;--line:#24413d;--ubub:#17434b;--chip:#1a312e;--err:#ff9d90}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 "Avenir Next","Segoe UI",system-ui,sans-serif}
-main{max-width:660px;margin:0 auto;padding:28px 16px 44px}
-h1{font-size:1.5rem;margin:0 0 2px;letter-spacing:-.02em}
-.sub{color:var(--mute);margin:0 0 18px;font-size:.9rem}
-.bar{display:flex;gap:8px}
-input{flex:1;min-width:0;font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace;padding:10px 12px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink)}
-input:focus,button:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
-button{font:inherit;cursor:pointer;border:0;border-radius:9px}
-.go{padding:0 16px;background:var(--acc);color:var(--accink);font-weight:700}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 20px}
-.chip{padding:4px 9px;background:var(--chip);color:var(--ink);font-size:.78rem;font-family:ui-monospace,Menlo,Consolas,monospace}
-.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:9px;padding:12px 14px;margin-bottom:10px}
-.q{color:var(--mute);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;overflow-wrap:anywhere}
-.a{font:600 1.15rem/1.35 ui-monospace,Menlo,Consolas,monospace;margin:5px 0;overflow-wrap:anywhere}
-.err{color:var(--err);font-size:.92rem}
-ul{margin:5px 0 0;padding-left:18px;color:var(--mute);font-size:.82rem}
-h3{font-size:1rem;margin:10px 0 2px}
-.lead{margin:2px 0 8px;font-size:.92rem;font-weight:600}
-.sec{margin:9px 0}.sec b{font-size:.8rem;color:var(--acc)}.sec p{margin:1px 0 0;font-size:.86rem}
-.viz svg{width:100%;max-width:210px;display:block;margin:4px auto}
-.viz input{flex:none;width:100%;padding:0;border:0;background:none}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:13px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif}
+main{height:100%;max-width:560px;margin:0 auto;padding:0 12px;display:flex;flex-direction:column}
+header{display:flex;align-items:baseline;gap:8px;padding:12px 0 8px;flex:none}
+h1{font-size:1rem;margin:0;letter-spacing:-.01em}
+h1::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-right:6px}
+.sub{font-size:.7rem;color:var(--mute)}
+#log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding:4px 0 10px}
+.m{max-width:88%;padding:7px 10px;border-radius:12px;overflow-wrap:anywhere}
+.u{align-self:flex-end;background:var(--ubub);border-bottom-right-radius:4px;font:.78rem ui-monospace,Menlo,Consolas,monospace}
+.b{align-self:flex-start;background:var(--panel);border:1px solid var(--line);border-bottom-left-radius:4px}
+.b.wide{max-width:96%}
+.chips{display:flex;gap:5px;overflow-x:auto;padding:4px 0 6px;flex:none}
+.chip{white-space:nowrap;padding:3px 9px;background:var(--chip);color:var(--ink);font-size:.68rem;border-radius:11px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.bar{display:flex;gap:6px;padding:4px 0 12px;flex:none}
+#q{flex:1;min-width:0;font:.8rem ui-monospace,Menlo,Consolas,monospace;padding:7px 11px;border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink)}
+#q:focus,button:focus-visible,.viz input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+button{font:inherit;cursor:pointer;border:0}
+.go{padding:0 14px;background:var(--acc);color:var(--accink);font-weight:700;font-size:.78rem;border-radius:16px}
+.a{font:600 .85rem/1.4 ui-monospace,Menlo,Consolas,monospace}
+.err{color:var(--err);font:.8rem system-ui,sans-serif}
+ul{margin:4px 0 0;padding-left:16px;color:var(--mute);font-size:.72rem}
+h3{font-size:.85rem;margin:2px 0 1px}
+.lead{margin:1px 0 6px;font-size:.8rem;font-weight:600}
+.sec{margin:7px 0}.sec b{font-size:.68rem;color:var(--acc);text-transform:uppercase;letter-spacing:.03em}.sec p{margin:1px 0 0;font-size:.78rem}
+.viz svg{width:100%;max-width:150px;display:block;margin:2px auto}
+.viz input{display:block;width:100%;accent-color:var(--acc)}
 .viz .c{fill:none;stroke:var(--line);stroke-width:2}.viz .ax{stroke:var(--line)}
 .viz .rl{stroke:var(--ink);stroke-width:2}.viz .sl{stroke:var(--acc);stroke-width:4}
 .viz .cl{stroke:var(--mute);stroke-width:4}.viz .pt{fill:var(--ink)}
-.ro{font:.78rem ui-monospace,Menlo,Consolas,monospace;color:var(--mute);text-align:center}
-.hint{color:var(--mute);font-size:.8rem;margin-top:24px}
+.ro{font:.68rem ui-monospace,Menlo,Consolas,monospace;color:var(--mute);text-align:center}
 .flash{animation:fl .9s}
-@keyframes fl{0%,60%{box-shadow:0 0 0 4px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
-@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:3px solid var(--acc)}}
+@keyframes fl{0%,60%{box-shadow:0 0 0 3px var(--acc)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:2px solid var(--acc)}}
 </style>
 </head>
 <body>
 <main>
-<h1>GoonSuke</h1>
-<p class="sub">A math solver that runs entirely in your browser. No API key, no server.</p>
-<div class="bar"><input id="q" placeholder="Try: what is sin?" autocomplete="off" autofocus aria-label="Math question"><button class="go" id="go">Solve</button></div>
+<header><h1>MathMind</h1><span class="sub">runs in your browser · no API key</span></header>
+<div id="log" aria-live="polite"></div>
 <div class="chips" id="chips"></div>
-<div id="out"></div>
-<p class="hint">It calculates arithmetic, exact fractions, equations with one unknown, derivatives, definite integrals, simplify and expand, prime factors and percentages. It also explains concepts such as sine, cosine, tangent, the Pythagorean theorem, logarithms and derivatives. It can’t read free-form word problems.</p>
+<div class="bar"><input id="q" placeholder="Message MathMind…" autocomplete="off" aria-label="Message"><button class="go" id="go">Send</button></div>
 </main>
 <script>
 const $ = s => document.querySelector(s);
@@ -69,13 +72,13 @@ const uv = e => { const s = math.parse(e).filter(n => n.isSymbolNode && !(n.name
 const DB = [
 [["sin","sine","sine function","sin function"],"Sine (sin)","Sine takes an angle and gives back a number between −1 and 1. Picture turning through that angle on a circle: the sine is how high you have climbed above the horizontal line through the center.",[
 ["In a right triangle","Pick one acute angle θ. The side facing it is the opposite, and the longest side is the hypotenuse. Then sin θ = opposite ÷ hypotenuse (the “SOH” in SOH-CAH-TOA). The ratio depends only on the angle, not the triangle’s size, and it can’t exceed 1 because the hypotenuse is always the longest side."],
-["On the unit circle","On a circle of radius 1, sin θ is the height of the point reached after turning θ from the right-hand side: the green line above. It’s positive in the top half and negative in the bottom half, and it works for any angle, including past 90° and below 0°, which triangles alone can’t handle. Drag the slider to see it."],
+["On the unit circle","On a circle of radius 1, sin θ is the height of the point reached after turning θ from the right-hand side: the cyan line above. It’s positive in the top half and negative in the bottom half, and it works for any angle, including past 90° and below 0°, which triangles alone can’t handle. Drag the slider to see it."],
 ["Shape and key values","Its graph is a smooth wave: 0 at 0°, peak 1 at 90°, back to 0 at 180°, trough −1 at 270°, then it repeats every 360° (2π radians). Exact values: sin 0° = 0, sin 30° = 1/2, sin 45° = √2/2 ≈ 0.707, sin 60° = √3/2 ≈ 0.866, sin 90° = 1."],
-["Worked example","A 5 m ladder leans at 60° to the ground. The height it reaches is 5 × sin 60° = 5 × 0.866 ≈ 4.33 m. Type 5 * sin(60 deg) below to check."],
-["Useful facts","sin²θ + cos²θ = 1 · sin(−θ) = −sin θ · sin(90° − θ) = cos θ · The inverse, asin, goes backwards: asin(0.5) ≈ 0.5236 rad, which is 30°. This page reads angles as radians unless you add deg, as in sin(30 deg)."]],true],
-[["cos","cosine","cosine function","cos function"],"Cosine (cos)","Cosine takes an angle and gives back a number between −1 and 1. On a circle, it is how far right (or left) of the center you are after turning through that angle.",[
+["Worked example","A 5 m ladder leans at 60° to the ground. The height it reaches is 5 × sin 60° = 5 × 0.866 ≈ 4.33 m. Type 5 * sin(60 deg) to check."],
+["Useful facts","sin²θ + cos²θ = 1 · sin(−θ) = −sin θ · sin(90° − θ) = cos θ · The inverse, asin, goes backwards: asin(0.5) ≈ 0.5236 rad, which is 30°. Try “sin of 30” for a quick value."]],true],
+[["cos","cosin","cosine","cosine function","cos function"],"Cosine (cos)","Cosine takes an angle and gives back a number between −1 and 1. On a circle, it is how far right (or left) of the center you are after turning through that angle.",[
 ["In a right triangle","cos θ = adjacent ÷ hypotenuse (the “CAH” in SOH-CAH-TOA), where the adjacent side is the one touching θ that isn’t the hypotenuse. The smaller the angle, the closer the adjacent side gets to the hypotenuse, so cos 0° = 1."],
-["On the unit circle","cos θ is the horizontal position of the point at angle θ: the grey line above. It is 1 at 0°, 0 at 90° and −1 at 180°. Cosine is just sine shifted by 90°, since cos θ = sin(90° − θ)."],
+["On the unit circle","cos θ is the horizontal position of the point at angle θ: the grey horizontal line above. It is 1 at 0°, 0 at 90° and −1 at 180°. Cosine is just sine shifted by 90°, since cos θ = sin(90° − θ)."],
 ["Shape and key values","The same wave as sine but starting at its peak: 1 at 0°, 0 at 90°, −1 at 180°, 0 at 270°, 1 at 360°. Exact values: cos 30° = √3/2 ≈ 0.866, cos 45° = √2/2 ≈ 0.707, cos 60° = 1/2."],
 ["Worked example","A ramp rises at 20° and its surface is 8 m long. Its horizontal run is 8 × cos 20° ≈ 7.52 m. Type 8 * cos(20 deg) to check."],
 ["Useful facts","cos(−θ) = cos θ, so it’s symmetric · cos²θ + sin²θ = 1 · The law of cosines, c² = a² + b² − 2ab·cos C, extends the Pythagorean theorem to any triangle · acos(0.5) gives 60° (as radians)."]],true],
@@ -114,14 +117,22 @@ const DB = [
 [["imaginary number","imaginary numbers","complex number","complex numbers","i"],"Imaginary and complex numbers","The imaginary unit i is defined by i² = −1, and a complex number looks like a + bi.",[["Why they exist","They give square roots to negative numbers: √(−9) = 3i. Type (2 + 3i) * (1 - i) to try it."]]]
 ];
 const K = {}; DB.forEach(c => c[0].forEach(a => K[a] = c));
-const QW = /^(what'?s|whats|what is|what are|define|definition of|explain|meaning of|tell me about|describe)\s+/;
+const QW = /^(what'?s|whats|what is|what are|what does|how does|define|definition of|explain|meaning of|tell me about|describe)\s+/;
+const lev = (a, b) => { const d = [...Array(b.length + 1).keys()]; for (let i = 1; i <= a.length; i++) { let p = d[0]; d[0] = i; for (let j = 1; j <= b.length; j++) { const t = d[j]; d[j] = Math.min(d[j] + 1, d[j - 1] + 1, p + (a[i - 1] === b[j - 1] ? 0 : 1)); p = t; } } return d[b.length]; };
+function look(p) {
+  p = p.replace(/\s+(function|functions|mean|means|work|works)$/, "");
+  if (K[p]) return K[p];
+  const s = p.replace(/s$/, ""); if (K[s]) return K[s];
+  if (p.length >= 5 && /^[a-z' -]+$/.test(p)) { let best = null; for (const k in K) if (k.length >= 5 && lev(p, k) <= 1) best = K[k]; return best; }
+  return null;
+}
 function concept(raw) {
   let t = raw.trim().toLowerCase().replace(/’/g, "'").replace(/[?!.]+$/, "");
   const asked = QW.test(t) || /\?\s*$/.test(raw);
   t = t.replace(QW, "").replace(/^(a|an|the)\s+/, "").trim();
   const parts = t.split(/\s*(?:,|&|\band\b|\bor\b)\s*/).filter(Boolean).map(p => p.replace(/^(a|an|the)\s+/, ""));
   if (!parts.length) return null;
-  const hit = parts.map(p => K[p] || K[p.replace(/s$/, "")]);
+  const hit = parts.map(look);
   if (hit.some(x => !x)) return null;
   if (!asked && parts.length === 1) { try { if (typeof math.evaluate(t) === "number") return null; } catch (_) {} }
   return {concepts: [...new Set(hit)]};
@@ -134,152 +145,4 @@ function trigViz() {
   const up = () => {
     const d = +g("input").value, t = d * Math.PI / 180, c = Math.cos(t), s = Math.sin(t), x = c * 100, y = -s * 100;
     set(g(".rl"), {x1: 0, y1: 0, x2: x, y2: y}); set(g(".sl"), {x1: x, y1: 0, x2: x, y2: y});
-    set(g(".cl"), {x1: 0, y1: 0, x2: x, y2: 0}); set(g(".pt"), {cx: x, cy: y});
-    g(".ro").textContent = "θ = " + d + "°  ·  sin = " + n(s) + "  ·  cos = " + n(c) + "  ·  tan = " + (Math.abs(c) < 1e-9 ? "undefined" : n(s / c));
-  };
-  g("input").oninput = up; up(); return w;
-}
-function renderConcepts(card, list) {
-  let viz = false;
-  list.forEach(c => {
-    const h = document.createElement("h3"); h.textContent = c[1]; card.append(h);
-    const p = document.createElement("p"); p.className = "lead"; p.textContent = c[2]; card.append(p);
-    if (c[4] && !viz) { card.append(trigViz()); viz = true; }
-    c[3].forEach(([hd, tx]) => {
-      const s = document.createElement("div"); s.className = "sec";
-      const b = document.createElement("b"); b.textContent = hd;
-      const d = document.createElement("p"); d.textContent = tx;
-      s.append(b, d); card.append(s);
-    });
-  });
-}
-
-function polyRoots(co) {
-  const n = co.length - 1, a = co.map(v => v / co[n]);
-  const z = []; for (let k = 0; k < n; k++) z.push(math.pow(math.complex(0.4, 0.9), k));
-  for (let it = 0; it < 500; it++) {
-    let d = 0;
-    for (let i = 0; i < n; i++) {
-      let v = math.complex(1, 0);
-      for (let j = n - 1; j >= 0; j--) v = math.add(math.multiply(v, z[i]), a[j]);
-      let den = math.complex(1, 0);
-      for (let j = 0; j < n; j++) if (j !== i) den = math.multiply(den, math.subtract(z[i], z[j]));
-      const dl = math.divide(v, den);
-      z[i] = math.subtract(z[i], dl);
-      d = Math.max(d, math.abs(dl));
-    }
-    if (d < 1e-14) break;
-  }
-  return z;
-}
-
-function solve(s) {
-  const [l, r] = s.includes("=") ? s.split("=") : [s, "0"];
-  const e = "(" + l + ")-(" + r + ")", node = math.parse(e);
-  const vs = [...new Set(node.filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name))];
-  if (vs.length !== 1) throw Error("I can solve equations with exactly one unknown, like solve 2x + 3 = 11");
-  const v = vs[0], steps = ["Move everything to one side: " + e + " = 0"];
-  let co = null;
-  try { co = math.rationalize(e, {}, true).coefficients.map(Number); if (co.some(isNaN)) co = null; } catch (_) {}
-  if (co) {
-    while (co.length > 1 && Math.abs(co[co.length - 1]) < 1e-12) co.pop();
-    const n = co.length - 1;
-    steps.push("Polynomial of degree " + n + ", coefficients from lowest power: [" + co.map(cl).join(", ") + "]");
-    if (n === 0) return {ans: Math.abs(co[0]) < 1e-12 ? "Every value of " + v + " works" : "No solution", steps};
-    if (n === 2) steps.push("Discriminant b² − 4ac = " + cl(co[1] * co[1] - 4 * co[2] * co[0]));
-    if (n > 2) steps.push("Roots found with the Durand–Kerner iteration");
-    const rs = n === 1 ? [{re: -co[0] / co[1], im: 0}] : polyRoots(co);
-    const txt = [...new Set(rs.map(C))];
-    rs.filter(z => Math.abs(z.im) < 1e-9).slice(0, 1).forEach(z => {
-      steps.push("Check: plugging " + v + " = " + C(z) + " back in leaves a residual of " + F(node.evaluate({[v]: z.re})));
-    });
-    return {ans: txt.map(t => v + " = " + t).join("   "), steps};
-  }
-  steps.push("Not a polynomial, so I scan [-100, 100] for sign changes and refine each by bisection");
-  const f = x => { try { const y = node.evaluate({[v]: x}); return typeof y === "number" && isFinite(y) ? y : NaN; } catch (_) { return NaN; } };
-  const out = new Set(); let px = -100, py = f(px);
-  for (let x = -99.99; x <= 100; x += 0.01) {
-    const y = f(x);
-    if (py * y < 0) { let a = px, b = x; for (let i = 0; i < 60; i++) { const m = (a + b) / 2; if (f(a) * f(m) <= 0) b = m; else a = m; } out.add(cl((a + b) / 2)); }
-    else if (y === 0) out.add(cl(x));
-    px = x; py = y;
-  }
-  return {ans: out.size ? [...out].map(t => v + " ≈ " + t).join("   ") : "No real solutions found in [-100, 100]", steps};
-}
-
-function run(raw) {
-  const cc = concept(raw); if (cc) return cc;
-  const q = raw.trim().replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-").replace(/\?+$/, "")
-    .replace(/^(what(?:'|’)?s|what is|calculate|compute|evaluate|find)\s+/i, "");
-  let m;
-  if (m = q.match(/^(?:derivative|differentiate|diff|d\/dx)(?:\s+of)?\s+(.+)$/i)) {
-    const v = uv(m[1]);
-    return {ans: "d/d" + v + " = " + math.simplify(math.derivative(m[1], v)).toString(), steps: ["Applied the power, product, quotient and chain rules, then simplified"]};
-  }
-  if (m = q.match(/^(?:integrate|integral of)\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+)$/i)) {
-    const A = math.evaluate(m[2]), B = math.evaluate(m[3]), c = math.compile(m[1]), v = uv(m[1]), n = 2000, h = (B - A) / n;
-    let s = 0;
-    for (let i = 0; i <= n; i++) s += (i === 0 || i === n ? 1 : i % 2 ? 4 : 2) * c.evaluate({[v]: A + i * h});
-    return {ans: "≈ " + F(s * h / 3), steps: ["Simpson’s rule with 2000 intervals on [" + F(A) + ", " + F(B) + "]"]};
-  }
-  if (m = q.match(/^(?:factor|factorise|factorize|prime factors? of)\s+(\d+)$/i)) {
-    const N = +m[1]; if (N < 2 || N > 1e14) throw Error("Use a whole number from 2 to 100,000,000,000,000");
-    const f = {}; let r = N;
-    for (let p = 2; p * p <= r; p++) while (r % p === 0) { f[p] = (f[p] || 0) + 1; r /= p; }
-    if (r > 1) f[r] = (f[r] || 0) + 1;
-    const ent = Object.entries(f), divs = ent.reduce((t, [, e]) => t * (e + 1), 1);
-    return {ans: ent.length === 1 && ent[0][1] === 1 ? N + " is prime" : N + " = " + ent.map(([p, e]) => e > 1 ? p + "^" + e : p).join(" × "), steps: ["Trial division up to √" + N, "It has " + divs + " positive divisors"]};
-  }
-  if (m = q.match(/^simplify\s+(.+)$/i)) return {ans: math.simplify(m[1]).toString(), steps: ["Applied algebraic rewrite rules until nothing more reduced"]};
-  if (m = q.match(/^expand\s+(.+)$/i)) return {ans: math.rationalize(m[1]).toString(), steps: ["Multiplied out and collected like terms"]};
-  if (m = q.match(/^(-?[\d.]+)\s*%\s*of\s+(.+)$/i)) {
-    return {ans: F(math.evaluate("(" + m[1] + "/100)*(" + m[2] + ")")), steps: [m[1] + "% means " + m[1] + "/100, so I multiplied that by " + m[2]]};
-  }
-  if (/^solve\b/i.test(q) || q.includes("=")) return solve(q.replace(/^solve\s*(for\s+\w+\s*:?)?/i, ""));
-  let val;
-  try { val = math.evaluate(q); }
-  catch (err) {
-    if (/Undefined symbol/.test(err.message)) return {ans: math.simplify(q).toString(), steps: ["It has unknown symbols, so I simplified it symbolically"]};
-    throw err;
-  }
-  if (typeof val === "function") throw Error("“" + q + "” is a function. Give it an input, like " + q + "(30 deg)");
-  const steps = ["Interpreted as: " + math.parse(q).toString()];
-  let ans = F(val);
-  try {
-    const x = fm.evaluate(q);
-    if (math.isFraction(x) && x.d !== 1) { ans = x.s * x.n + "/" + x.d + "  ≈  " + ans; steps.push("Exact fraction arithmetic keeps the result precise"); }
-  } catch (_) {}
-  return {ans, steps};
-}
-
-let lastKey = "", lastCard = null;
-function ask(text) {
-  const q = (text || $("#q").value).trim(); if (!q) return;
-  const key = q.toLowerCase().replace(/\s+/g, " ");
-  if (key === lastKey && lastCard) {
-    lastCard.classList.remove("flash"); void lastCard.offsetWidth; lastCard.classList.add("flash");
-    $("#q").value = ""; return;
-  }
-  const card = document.createElement("article"); card.className = "card";
-  const h = document.createElement("div"); h.className = "q"; h.textContent = q; card.append(h);
-  const a = document.createElement("div"); a.className = "a";
-  try {
-    const r = run(q);
-    if (r.concepts) renderConcepts(card, r.concepts);
-    else {
-      a.textContent = r.ans; card.append(a);
-      if (r.steps && r.steps.length) { const u = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; u.append(li); }); card.append(u); }
-    }
-  } catch (e) { a.className = "a err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; card.append(a); }
-  $("#out").prepend(card); $("#q").value = "";
-  lastKey = key; lastCard = card;
-}
-
-["what is sin?", "what is cosine?", "what is tangent?", "what is the pythagorean theorem?", "what is a derivative?", "solve x^2 - 5x + 6 = 0", "integrate x^2 from 0 to 3", "factor 360", "1/3 + 2/5", "sin(30 deg)"].forEach(t => {
-  const b = document.createElement("button"); b.className = "chip"; b.textContent = t; b.onclick = () => ask(t); $("#chips").append(b);
-});
-$("#go").onclick = () => ask();
-$("#q").addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
-</script>
-</body>
-</html>
+    set(g(".cl"), {x1: 0, y1: 0, x2: x, y2:

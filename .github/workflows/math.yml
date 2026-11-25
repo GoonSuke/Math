@@ -145,4 +145,160 @@ function trigViz() {
   const up = () => {
     const d = +g("input").value, t = d * Math.PI / 180, c = Math.cos(t), s = Math.sin(t), x = c * 100, y = -s * 100;
     set(g(".rl"), {x1: 0, y1: 0, x2: x, y2: y}); set(g(".sl"), {x1: x, y1: 0, x2: x, y2: y});
-    set(g(".cl"), {x1: 0, y1: 0, x2: x, y2:
+    set(g(".cl"), {x1: 0, y1: 0, x2: x, y2: 0}); set(g(".pt"), {cx: x, cy: y});
+    g(".ro").textContent = "θ = " + d + "°  ·  sin = " + n(s) + "  ·  cos = " + n(c) + "  ·  tan = " + (Math.abs(c) < 1e-9 ? "undefined" : n(s / c));
+  };
+  g("input").oninput = up; up(); return w;
+}
+function renderConcepts(box, list) {
+  let viz = false;
+  list.forEach(c => {
+    const h = document.createElement("h3"); h.textContent = c[1]; box.append(h);
+    const p = document.createElement("p"); p.className = "lead"; p.textContent = c[2]; box.append(p);
+    if (c[4] && !viz) { box.append(trigViz()); viz = true; }
+    c[3].forEach(([hd, tx]) => {
+      const s = document.createElement("div"); s.className = "sec";
+      const b = document.createElement("b"); b.textContent = hd;
+      const d = document.createElement("p"); d.textContent = tx;
+      s.append(b, d); box.append(s);
+    });
+  });
+}
+
+function polyRoots(co) {
+  const n = co.length - 1, a = co.map(v => v / co[n]);
+  const z = []; for (let k = 0; k < n; k++) z.push(math.pow(math.complex(0.4, 0.9), k));
+  for (let it = 0; it < 500; it++) {
+    let d = 0;
+    for (let i = 0; i < n; i++) {
+      let v = math.complex(1, 0);
+      for (let j = n - 1; j >= 0; j--) v = math.add(math.multiply(v, z[i]), a[j]);
+      let den = math.complex(1, 0);
+      for (let j = 0; j < n; j++) if (j !== i) den = math.multiply(den, math.subtract(z[i], z[j]));
+      const dl = math.divide(v, den);
+      z[i] = math.subtract(z[i], dl);
+      d = Math.max(d, math.abs(dl));
+    }
+    if (d < 1e-14) break;
+  }
+  return z;
+}
+
+function solve(s) {
+  const [l, r] = s.includes("=") ? s.split("=") : [s, "0"];
+  const e = "(" + l + ")-(" + r + ")", node = math.parse(e);
+  const vs = [...new Set(node.filter(n => n.isSymbolNode && !(n.name in math)).map(n => n.name))];
+  if (vs.length !== 1) throw Error("I can solve equations with exactly one unknown, like solve 2x + 3 = 11");
+  const v = vs[0], steps = ["Move everything to one side: " + e + " = 0"];
+  let co = null;
+  try { co = math.rationalize(e, {}, true).coefficients.map(Number); if (co.some(isNaN)) co = null; } catch (_) {}
+  if (co) {
+    while (co.length > 1 && Math.abs(co[co.length - 1]) < 1e-12) co.pop();
+    const n = co.length - 1;
+    steps.push("Polynomial of degree " + n + ", coefficients from lowest power: [" + co.map(cl).join(", ") + "]");
+    if (n === 0) return {ans: Math.abs(co[0]) < 1e-12 ? "Every value of " + v + " works" : "No solution", steps};
+    if (n === 2) steps.push("Discriminant b² − 4ac = " + cl(co[1] * co[1] - 4 * co[2] * co[0]));
+    if (n > 2) steps.push("Roots found with the Durand–Kerner iteration");
+    const rs = n === 1 ? [{re: -co[0] / co[1], im: 0}] : polyRoots(co);
+    const txt = [...new Set(rs.map(C))];
+    rs.filter(z => Math.abs(z.im) < 1e-9).slice(0, 1).forEach(z => {
+      steps.push("Check: plugging " + v + " = " + C(z) + " back in leaves a residual of " + F(node.evaluate({[v]: z.re})));
+    });
+    return {ans: txt.map(t => v + " = " + t).join("   "), steps};
+  }
+  steps.push("Not a polynomial, so I scan [-100, 100] for sign changes and refine each by bisection");
+  const f = x => { try { const y = node.evaluate({[v]: x}); return typeof y === "number" && isFinite(y) ? y : NaN; } catch (_) { return NaN; } };
+  const out = new Set(); let px = -100, py = f(px);
+  for (let x = -99.99; x <= 100; x += 0.01) {
+    const y = f(x);
+    if (py * y < 0) { let a = px, b = x; for (let i = 0; i < 60; i++) { const m = (a + b) / 2; if (f(a) * f(m) <= 0) b = m; else a = m; } out.add(cl((a + b) / 2)); }
+    else if (y === 0) out.add(cl(x));
+    px = x; py = y;
+  }
+  return {ans: out.size ? [...out].map(t => v + " ≈ " + t).join("   ") : "No real solutions found in [-100, 100]", steps};
+}
+
+function run(raw) {
+  const cc = concept(raw); if (cc) return cc;
+  const q = raw.trim().replace(/×/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-").replace(/\?+$/, "")
+    .replace(/^(what(?:'|’)?s|what is|calculate|compute|evaluate|find)\s+/i, "");
+  let m;
+  if (m = q.match(/^(sin|sine|cos|cosine|tan|tangent)\s+(?:of\s+)?(-?[\d.]+)\s*(deg|degrees?|°|rad|radians?)?$/i)) {
+    const fn = m[1].slice(0, 3).toLowerCase(), rad = /^rad/i.test(m[3] || ""), ang = +m[2], v = math[fn](rad ? ang : ang * Math.PI / 180);
+    return {ans: fn + "(" + ang + (rad ? " rad" : "°") + ") = " + F(Math.abs(v) < 1e-12 ? 0 : v), steps: [rad ? "Angle read in radians" : "Angle read in degrees (add rad for radians)"]};
+  }
+  if (m = q.match(/^(?:derivative|differentiate|diff|d\/dx)(?:\s+of)?\s+(.+)$/i)) {
+    const v = uv(m[1]);
+    return {ans: "d/d" + v + " = " + math.simplify(math.derivative(m[1], v)).toString(), steps: ["Applied the power, product, quotient and chain rules, then simplified"]};
+  }
+  if (m = q.match(/^(?:integrate|integral of)\s+(.+?)\s+from\s+(.+?)\s+to\s+(.+)$/i)) {
+    const A = math.evaluate(m[2]), B = math.evaluate(m[3]), c = math.compile(m[1]), v = uv(m[1]), n = 2000, h = (B - A) / n;
+    let s = 0;
+    for (let i = 0; i <= n; i++) s += (i === 0 || i === n ? 1 : i % 2 ? 4 : 2) * c.evaluate({[v]: A + i * h});
+    return {ans: "≈ " + F(s * h / 3), steps: ["Simpson’s rule with 2000 intervals on [" + F(A) + ", " + F(B) + "]"]};
+  }
+  if (m = q.match(/^(?:factor|factorise|factorize|prime factors? of)\s+(\d+)$/i)) {
+    const N = +m[1]; if (N < 2 || N > 1e14) throw Error("Use a whole number from 2 to 100,000,000,000,000");
+    const f = {}; let r = N;
+    for (let p = 2; p * p <= r; p++) while (r % p === 0) { f[p] = (f[p] || 0) + 1; r /= p; }
+    if (r > 1) f[r] = (f[r] || 0) + 1;
+    const ent = Object.entries(f), divs = ent.reduce((t, [, e]) => t * (e + 1), 1);
+    return {ans: ent.length === 1 && ent[0][1] === 1 ? N + " is prime" : N + " = " + ent.map(([p, e]) => e > 1 ? p + "^" + e : p).join(" × "), steps: ["Trial division up to √" + N, "It has " + divs + " positive divisors"]};
+  }
+  if (m = q.match(/^simplify\s+(.+)$/i)) return {ans: math.simplify(m[1]).toString(), steps: ["Applied algebraic rewrite rules until nothing more reduced"]};
+  if (m = q.match(/^expand\s+(.+)$/i)) return {ans: math.rationalize(m[1]).toString(), steps: ["Multiplied out and collected like terms"]};
+  if (m = q.match(/^(-?[\d.]+)\s*%\s*of\s+(.+)$/i)) {
+    return {ans: F(math.evaluate("(" + m[1] + "/100)*(" + m[2] + ")")), steps: [m[1] + "% means " + m[1] + "/100, so I multiplied that by " + m[2]]};
+  }
+  if (/^solve\b/i.test(q) || q.includes("=")) return solve(q.replace(/^solve\s*(for\s+\w+\s*:?)?/i, ""));
+  let val;
+  try { val = math.evaluate(q); }
+  catch (err) {
+    if (/Undefined symbol/.test(err.message)) return {ans: math.simplify(q).toString(), steps: ["It has unknown symbols, so I simplified it symbolically"]};
+    throw err;
+  }
+  if (typeof val === "function") throw Error("That’s a function and needs an input, like " + q + "(30 deg). Or ask “what is " + q + "?”");
+  const steps = ["Interpreted as: " + math.parse(q).toString()];
+  let ans = F(val);
+  try {
+    const x = fm.evaluate(q);
+    if (math.isFraction(x) && x.d !== 1) { ans = x.s * x.n + "/" + x.d + "  ≈  " + ans; steps.push("Exact fraction arithmetic keeps the result precise"); }
+  } catch (_) {}
+  return {ans, steps};
+}
+
+const log = $("#log");
+const bubble = cls => { const d = document.createElement("div"); d.className = "m " + cls; log.append(d); return d; };
+let lastKey = "", lastBub = null;
+function ask(text) {
+  const q = (text || $("#q").value).trim(); if (!q) return;
+  $("#q").value = "";
+  const key = q.toLowerCase().replace(/\s+/g, " ");
+  if (key === lastKey && lastBub) {
+    lastBub.scrollIntoView({block: "start", behavior: "smooth"});
+    lastBub.classList.remove("flash"); void lastBub.offsetWidth; lastBub.classList.add("flash");
+    return;
+  }
+  const u = bubble("u"); u.textContent = q;
+  const b = bubble("b");
+  try {
+    const r = run(q);
+    if (r.concepts) { b.classList.add("wide"); renderConcepts(b, r.concepts); }
+    else {
+      const a = document.createElement("div"); a.className = "a"; a.textContent = r.ans; b.append(a);
+      if (r.steps && r.steps.length) { const ul = document.createElement("ul"); r.steps.forEach(s => { const li = document.createElement("li"); li.textContent = s; ul.append(li); }); b.append(ul); }
+    }
+  } catch (e) { const a = document.createElement("div"); a.className = "err"; a.textContent = "Couldn’t work that out: " + String(e.message).split("\n")[0]; b.append(a); }
+  u.scrollIntoView({block: "start", behavior: "smooth"});
+  lastKey = key; lastBub = b;
+}
+
+bubble("b").textContent = "Hi! Ask me a math question or the meaning of a term, like “what is sin?”. I can also calculate (12 * (3 + 4)) and solve equations (solve x^2 - 5x + 6 = 0).";
+["what is sin?", "what is cosine?", "tangent", "sin of 30", "pythagorean theorem", "what is a derivative?", "solve x^2 - 5x + 6 = 0", "factor 360", "1/3 + 2/5"].forEach(t => {
+  const b = document.createElement("button"); b.className = "chip"; b.textContent = t; b.onclick = () => ask(t); $("#chips").append(b);
+});
+$("#go").onclick = () => ask();
+$("#q").addEventListener("keydown", e => { if (e.key === "Enter") ask(); });
+</script>
+</body>
+</html>
